@@ -47,7 +47,6 @@ end
 
 -- The main event handler as function to separate eventID from the remaining arguments
 function handleEvent(eventID, ...)
-	debug("handling event!")
   if (eventID) then -- can be nil if no event was pulled for some time
     eventHandlers[eventID](...) -- call the appropriate event handler with all remaining arguments
   end
@@ -56,7 +55,8 @@ end
 
 -- shut down the reactor --
 function shutdown()
-
+	reactor.setActive(false)
+	running = false
 end
 
 -- beep a warning signal that power is low --
@@ -73,6 +73,11 @@ print("starting")
 core_temp = 0
 case_tmep = 0
 energy_stored = 0
+energy_stored_max = 0
+
+turb_speed = 0
+turb_intake_rate = 0
+turb_inductor_on = turbine.getInductorEngaged()
 
 comp_energy = 0
 comp_energy_max = computer.maxEnergy()
@@ -96,10 +101,16 @@ while running do
 	core_temp = reactor.getFuelTemperature()
 	case_temp = reactor.getCasingTemperature()
 
+	energy_stored = turbine.getEnergyStored()
+	turb_speed = turbine.getRotorSpeed()
+	energy_gen = turbine.getEnergyProducedLastTick()
+
 	-- Print our current state --
 	print("State:")
 	print("Core temp: ", core_temp)
 	print("Casing temp: ", case_temp)
 
-	print("Computer Power: ", comp_energy)
+	print("Rotor speed: ", turb_speed, " rpm")
+
+	print("Computer Power: ", comp_energy, "%")
 end
