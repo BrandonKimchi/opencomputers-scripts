@@ -1,9 +1,13 @@
 local component = require("component")
+local computer = require("computer")
 local keyboard = require("keyboard")
 local event = require("event")
 local gpu = component.gpu
 
-local debug = true
+local reactor = component.br_reactor
+local turbine = component.br_turbine
+
+local debug = false
 
 -- Assuming screen is 2x1 tier 2 monitors for now --
 gpu.setResolution(80, 25)
@@ -29,10 +33,8 @@ end
 local eventHandlers = setmetatable({}, { __index = function() return unknownEvent end })
 
 -- handle key presses --
-function eventHandlers.key_down(address, char, code, playerName)
-  if (char == char_space) then
-    running = false
-  elseif (char == button_quit) then
+function eventHandlers.key_up(address, char, code, playerName)
+	if (char == button_quit) then
 		running = false
 	elseif (char == button_up) then
 		print("up!")
@@ -52,15 +54,52 @@ function handleEvent(eventID, ...)
 end
 
 
+-- shut down the reactor --
+function shutdown()
+
+end
+
+-- beep a warning signal that power is low --
+function warning_beep()
+
+end
+
+
 -- run main loop --
 local input = 0
 running = true
 print("starting")
-i = 0
+
+core_temp = 0
+case_tmep = 0
+energy_stored = 0
+
+comp_energy = 0
+comp_energy_max = computer.maxEnergy()
+
 while running do
 	-- Check inputs --
-	local event, addr, p1, p2, p3 = event.pull(10) -- short timeout to not hang
+	local event, addr, p1, p2, p3 = event.pull(1) -- short timeout to not hang
 	if event then
 		handleEvent(event, addr, p1, p2, p3)
 	end
+
+	-- If computer power low, fail system closed and shut down --
+	comp_energy = computer.energy()/comp_energy_max * 100
+	if(comp_energy < 25) then
+		shutdown()
+	elseif (comp_energy < 80) then
+		warning_beep()
+	end
+
+	-- Read current reactor state --
+	core_temp = reactor.getFuelTemperature()
+	case_temp = reactor.getCasingTemperature()
+
+	-- Print our current state --
+	print("State:")
+	print("Core temp: ", core_temp)
+	print("Casing temp: ", case_temp)
+
+	print("Computer Power: ", comp_energy)
 end
