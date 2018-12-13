@@ -72,6 +72,12 @@ function warning_beep()
 end
 
 
+-- PID update calculation to keep turbine RPMs in the strike zone --
+function PID(rpm)
+	return 0
+end
+
+
 -- run main loop --
 local input = 0
 running = true
@@ -100,14 +106,6 @@ while running do
 		handleEvent(event, addr, p1, p2, p3)
 	end
 
-	-- If computer power low, fail system closed and shut down --
-	comp_energy = computer.energy()/comp_energy_max * 100
-	if(comp_energy < 25) then
-		shutdown()
-	elseif (comp_energy < 80) then
-		warning_beep()
-	end
-
 	-- Read current reactor state --
 	core_temp = reactor.getFuelTemperature()
 	case_temp = reactor.getCasingTemperature()
@@ -118,15 +116,45 @@ while running do
 	energy_gen = turbine.getEnergyProducedLastTick()
 
 
+	-- If computer power low, fail system closed and shut down --
+	comp_energy = computer.energy()/comp_energy_max * 100
+	if(comp_energy < 25) then
+		shutdown()
+	elseif (comp_energy < 80) then
+		warning_beep()
+	end
+
+	-- If our energy is full, turn off to save fuel --
+	if (energy_stored > 900000) then
+		reactor.setActive(false)
+	end
+
+	-- Startup routine --
+	if (energy_stored < 100000) then
+		reactor.setActive(true)
+		turbine.setInductorEngaged(false)
+	end
+
+	if(turb_speed > 1700) then
+		turbine.setInductorEngaged(true)
+	end
+
+	control_rod_delta = PID(turb_speed)
+
 
 	-- Print our current state --
 	term.clear()
 	print("State:")
+	if turb_inductor_on then
+		print("Turbine: ", "on")
+	else
+		print("Turbine: ", "off")
+	end
 	print("Core temp: ", core_temp)
 	print("Casing temp: ", case_temp)
 
-	print("Rotor speed: ", turb_speed, " rpm")
+	print("Rotor speed: ", turb_speed .. " rpm")
 	print("Energy generated: ", energy_gen)
-	print("Energy stored: ", energy_stored)
-	print("Computer Power: ", comp_energy, "%")
+	print("Energy stored: ", energy_stored .. "/1000000")
+	print("Computer Power: ", comp_energy .. "%")
 end
