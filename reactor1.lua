@@ -68,7 +68,7 @@ end
 
 -- beep a warning signal that power is low --
 function warning_beep()
-
+	computer.beep(1480, .8)
 end
 
 
