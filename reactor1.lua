@@ -7,6 +7,18 @@ local gpu = component.gpu
 local reactor = component.br_reactor
 local turbine = component.br_turbine
 
+-- config parameters --
+local goal_turbine_speed = 1800
+local turbine_activation_threshold = 1600
+local meltdown_threshold = 1900
+
+
+
+-- key bindings --
+local button_quit = string.byte("q")
+local button_up = string.byte("u")
+local button_down = string.byte("j")
+
 local debug = false
 
 -- Assuming screen is 2x1 tier 2 monitors for now --
@@ -17,11 +29,6 @@ function debug(str)
 		print(str)
 	end
 end
-
--- key bindings --
-local button_quit = string.byte("q")
-local button_up = string.byte("u")
-local button_down = string.byte("j")
 
 -- setup for event handling --
 function unknownEvent()
@@ -79,8 +86,12 @@ turb_speed = 0
 turb_intake_rate = 0
 turb_inductor_on = turbine.getInductorEngaged()
 
+control_rod_level = 0 -- we'll just move them all as one
+
 comp_energy = 0
 comp_energy_max = computer.maxEnergy()
+
+
 
 while running do
 	-- Check inputs --
@@ -100,10 +111,13 @@ while running do
 	-- Read current reactor state --
 	core_temp = reactor.getFuelTemperature()
 	case_temp = reactor.getCasingTemperature()
+	control_rod_level = reactor.getControlRodLevel(0)
 
 	energy_stored = turbine.getEnergyStored()
 	turb_speed = turbine.getRotorSpeed()
 	energy_gen = turbine.getEnergyProducedLastTick()
+
+
 
 	-- Print our current state --
 	print("State:")
@@ -111,6 +125,7 @@ while running do
 	print("Casing temp: ", case_temp)
 
 	print("Rotor speed: ", turb_speed, " rpm")
+	print("Energy generated: ", energy_gen)
 
 	print("Computer Power: ", comp_energy, "%")
 end
