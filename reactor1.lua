@@ -120,12 +120,13 @@ while running do
 
 
 	-- Print our current state --
+	term.clear()
 	print("State:")
 	print("Core temp: ", core_temp)
 	print("Casing temp: ", case_temp)
 
 	print("Rotor speed: ", turb_speed, " rpm")
 	print("Energy generated: ", energy_gen)
-
+	print("Energy stored: ", energy_stored)
 	print("Computer Power: ", comp_energy, "%")
 end
