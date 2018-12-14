@@ -2,6 +2,7 @@ local component = require("component")
 local computer = require("computer")
 local keyboard = require("keyboard")
 local event = require("event")
+local term = require("term")
 local gpu = component.gpu
 
 local reactor = component.br_reactor
@@ -115,6 +116,9 @@ while running do
 	turb_speed = turbine.getRotorSpeed()
 	energy_gen = turbine.getEnergyProducedLastTick()
 
+	turb_inductor_on = turbine.getInductorEngaged()
+
+
 
 	-- If computer power low, fail system closed and shut down --
 	comp_energy = computer.energy()/comp_energy_max * 100
@@ -135,12 +139,16 @@ while running do
 		turbine.setInductorEngaged(false)
 	end
 
-	if(turb_speed > 1700) then
+	if(turb_speed > turbine_activation_threshold) then
 		turbine.setInductorEngaged(true)
 	end
 
 	control_rod_delta = PID(turb_speed)
 
+	-- avoid meltdown --
+	if(case_temp > meltdown_threshold or core_temp > meltdown_threshold) then
+		shutdown()
+	end
 
 	-- Print our current state --
 	term.clear()
