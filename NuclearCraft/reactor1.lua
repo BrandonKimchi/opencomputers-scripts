@@ -12,7 +12,7 @@ local MAX_PWR = core.getMaxEnergyStored()
 -- key bindings --
 local button_quit = string.byte("q")
 local button_up = string.byte("u")
-local button_down = string.byte("j")
+local button_down = string.byte("d")
 
 -- is program running or not
 running = true
@@ -35,8 +35,12 @@ function eventHandlers.key_up(address, char, code, playerName)
 		running = false
 	elseif (char == button_up) then
 		print("up!")
+		core.activate()
+		active = true
 	elseif (char == button_down) then
 		print("down!")
+		core.deactivate()
+		active = false
 	else
 		-- nop on other keys --
 	end
@@ -53,6 +57,7 @@ end
 function shutdown()
 	reactor.setActive(false)
 	running = false
+	term.clear()
 end
 
 -- beep a warning signal that power is low --
@@ -62,7 +67,10 @@ end
 
 function printout (state)
 	term.clear()
-	term.write("test")
+	print("Status:")
+	print("Heat: ", state['heat']/MAX_HEAT*100, "% ", state['heat'], "/", MAX_HEAT)
+	print("Power: ", state['pwr'], "/", MAX_PWR)
+	print("Press q to quit")
 end
 
 comp_energy = 0
@@ -83,15 +91,30 @@ while(running) do
 		warning_beep()
 	end
 	
+	-- check state
+	heat = core.getHeatLevel()
+	pwr = core.getEnergyStored()
+	rate = core.getEnergyChange()
+	new_state = {heat=heat, pwr=pwr}
+	
+	-- activate if power needed and heat is manageable
+	if heat/MAX_HEAT > 0.9 then
+		active = false
+	else
+		if pwr/MAX_PWR > .95 then
+			active = false
+		else 
+			active = true
+		end
+	end
+	
 	if active then
 		core.activate()
 	else
 		core.deactivate()
 	end
 	
-	heat = core.getHeatLevel()
-	pwr = core.getEnergyStored()
-	rate = core.getEnergyChange()
-	new_state = {heat=heat, pwr=pwr}
+
 	printout(new_state)
+	os.sleep(0.2)
 end
