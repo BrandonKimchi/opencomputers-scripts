@@ -67,9 +67,11 @@ end
 
 function printout (state)
 	term.clear()
+	local heat_ratio = math.floor(state['heat']/MAX_HEAT*10000)/100
+	local power_ratio = math.floor(state['pwr']/MAX_PWR*10000)/100
 	print("Status:")
-	print("Heat: ", state['heat']/MAX_HEAT*100, "% ", state['heat'], "/", MAX_HEAT)
-	print("Power: ", state['pwr'], "/", MAX_PWR)
+	print("Heat: ", heat_ratio, "% ", state['heat'], "/", MAX_HEAT)
+	print("Power: ", power_ratio, "% ", state['pwr'], "/", MAX_PWR)
 	print("Press q to quit")
 end
 
@@ -101,10 +103,12 @@ while(running) do
 	if heat/MAX_HEAT > 0.9 then
 		active = false
 	else
-		if pwr/MAX_PWR > .95 then
+		if pwr/MAX_PWR > .99 then
 			active = false
 		else 
-			active = true
+			if pwr/MAX_PWR < .1 then 
+				active = true
+			end
 		end
 	end
 	
@@ -116,5 +120,4 @@ while(running) do
 	
 
 	printout(new_state)
-	os.sleep(0.2)
 end
